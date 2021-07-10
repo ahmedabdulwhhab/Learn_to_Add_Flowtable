@@ -53,7 +53,7 @@ for switch in data:
     iter_flows = iter(switch)
     next(iter_flows)
     for flow in iter_flows:
-        flow_items=("sc"+dpid+"-eth"+flow['IN_PORT'],flow['SRC'], flow['DST'], flow['OUT_PORT'])
+        flow_items=(flow['IN_PORT'],flow['SRC'], flow['DST'], flow['OUT_PORT'])
         print("\nflow_items",flow_items,"\n")
         all_items=(dpid, timer,timer,priority) +flow_items
         print("\nall_items",all_items,"\n")

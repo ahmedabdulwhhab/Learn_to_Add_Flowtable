@@ -17,6 +17,10 @@
 # Time:2016/04/13
 #
 
+#how to run
+#ubuntu@ubuntu:~/sdn/ryu-controller/muzixing/ryu/ryu/app$ ryu run  ./multipath_Ah_Rev000_13.py ./gui_topology/gui_topology.py
+#
+
 from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, DEAD_DISPATCHER

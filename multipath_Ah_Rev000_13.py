@@ -40,6 +40,7 @@ from ryu.controller import ofp_event
 from ryu.controller.handler import MAIN_DISPATCHER, DEAD_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 from ryu.lib import hub
+no_of_ticks=0
 ############
 
 
@@ -314,6 +315,7 @@ class MULTIPATH_13(app_manager.RyuApp):
                          '-------- -------- -------- '
                          '-------- -------- --------')
          """
+        no_of_ticks=no_of_ticks1
         for stat in sorted(body, key=attrgetter('port_no')):
             """
             self.logger.info('%016x %8x %8d %8d %8d %8d %8d %8d',
@@ -322,6 +324,6 @@ class MULTIPATH_13(app_manager.RyuApp):
                              stat.tx_packets, stat.tx_bytes, stat.tx_errors)
             """
             if ev.msg.datapath.id==5 and stat.port_no==1:
-                self.logger.info("Difference between rx and tx packets at s5 port 1 is %016d",stat.tx_packets-stat.rx_packets)
+                self.logger.info("after no. of ticks is %8d Difference between rx and tx packets at s5 port 1 is %016d",no_of_ticks,stat.tx_packets-stat.rx_packets)
             if ev.msg.datapath.id==5 and stat.port_no==3:
-                self.logger.info("Difference between rx and tx packets at s5 port 3 is %016d",stat.tx_packets-stat.rx_packets)
+                self.logger.info("after no. of ticks is %8d Difference between rx and tx packets at s5 port 3 is %016d",no_of_ticks,stat.tx_packets-stat.rx_packets)

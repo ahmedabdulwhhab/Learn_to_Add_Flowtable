@@ -18,7 +18,7 @@ Define each port name
 Add routing based on these ports,
 Check the difference between rx packets and tx port for one switch connect to server.
 
-## finally three methods are available
-Rest via curl cmd
-Rest via python file using fetch post
+## finally three methods are available<br>
+Rest via curl cmd<br>
+Rest via python file using fetch post<br>
 Inside the controller

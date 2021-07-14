@@ -17,10 +17,6 @@
 # Time:2016/04/13
 #
 
-#how to run
-#ubuntu@ubuntu:~/sdn/ryu-controller/muzixing/ryu/ryu/app$ ryu run  ./multipath_Ah_Rev000_13.py ./gui_topology/gui_topology.py
-#
-
 from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, DEAD_DISPATCHER
@@ -36,6 +32,17 @@ from ryu.lib.packet import ipv6
 from ryu import utils
 
 
+####new lines
+from operator import attrgetter
+
+from ryu.app import simple_switch_13
+from ryu.controller import ofp_event
+from ryu.controller.handler import MAIN_DISPATCHER, DEAD_DISPATCHER
+from ryu.controller.handler import set_ev_cls
+from ryu.lib import hub
+############
+
+
 class MULTIPATH_13(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
 
@@ -44,6 +51,7 @@ class MULTIPATH_13(app_manager.RyuApp):
         self.mac_to_port = {}
         self.datapaths = {}
         self.FLAGS = True
+        self.monitor_thread = hub.spawn(self._monitor)      #new
 
     @set_ev_cls(
         ofp_event.EventOFPErrorMsg,
@@ -268,12 +276,12 @@ class MULTIPATH_13(app_manager.RyuApp):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
-        req = parser.OFPFlowStatsRequest(datapath)
-        datapath.send_msg(req)
+        #req = parser.OFPFlowStatsRequest(datapath)
+        #datapath.send_msg(req)
 
         req = parser.OFPPortStatsRequest(datapath, 0, ofproto.OFPP_ANY)
         datapath.send_msg(req)
-
+    """
     @set_ev_cls(ofp_event.EventOFPFlowStatsReply, MAIN_DISPATCHER)
     def _flow_stats_reply_handler(self, ev):
         body = ev.msg.body
@@ -294,21 +302,26 @@ class MULTIPATH_13(app_manager.RyuApp):
                              stat.packet_count, stat.byte_count)
 	
 							 
-
+    """
     @set_ev_cls(ofp_event.EventOFPPortStatsReply, MAIN_DISPATCHER)
     def _port_stats_reply_handler(self, ev):
         body = ev.msg.body
-
+        """
         self.logger.info('datapath         port     '
                          'rx-pkts  rx-bytes rx-error '
                          'tx-pkts  tx-bytes tx-error')
         self.logger.info('---------------- -------- '
                          '-------- -------- -------- '
                          '-------- -------- --------')
+         """
         for stat in sorted(body, key=attrgetter('port_no')):
+            """
             self.logger.info('%016x %8x %8d %8d %8d %8d %8d %8d',
                              ev.msg.datapath.id, stat.port_no,
                              stat.rx_packets, stat.rx_bytes, stat.rx_errors,
                              stat.tx_packets, stat.tx_bytes, stat.tx_errors)
-            if ev.msg.datapath.id==1 and stat.port_no==1:
-                print("Difference between rx and tx packets is ",stat.rx_packets-stat.tx_packets)
+            """
+            if ev.msg.datapath.id==5 and stat.port_no==1:
+                self.logger.info("Difference between rx and tx packets at s5 port 1 is %016d",stat.tx_packets-stat.rx_packets)
+            if ev.msg.datapath.id==5 and stat.port_no==3:
+                self.logger.info("Difference between rx and tx packets at s5 port 3 is %016d",stat.tx_packets-stat.rx_packets)

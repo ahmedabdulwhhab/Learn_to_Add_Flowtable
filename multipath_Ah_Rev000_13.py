@@ -17,6 +17,9 @@
 # Time:2016/04/13
 #
 
+#ubuntu@ubuntu:~/sdn/ryu-controller/muzixing/ryu/ryu/app$ ryu-manager  ./multipath_Ah_Rev000_13.py ./ofctl_rest.py
+
+
 from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, DEAD_DISPATCHER
@@ -40,7 +43,14 @@ from ryu.controller import ofp_event
 from ryu.controller.handler import MAIN_DISPATCHER, DEAD_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 from ryu.lib import hub
-no_of_ticks=0
+import requests
+import json
+ryu_ip= '127.0.0.1'
+ryu_port = '8080'
+timer ='3000'
+import os
+switches = list()
+
 ############
 
 
@@ -52,6 +62,18 @@ class MULTIPATH_13(app_manager.RyuApp):
         self.mac_to_port = {}
         self.datapaths = {}
         self.FLAGS = True
+        self.no_of_ticks=0          #new
+        self.priority_incremntal=2  #new
+        self.datapath_sw1=0
+        self.parser_sw1={}
+        self.datapath_sw2=0
+        self.parser_sw2={}
+        self.datapath_sw3=0
+        self.parser_sw3={}
+        self.datapath_sw4=0
+        self.parser_sw4={}
+        self.datapath_sw5=0
+        self.parser_sw5={}
         self.monitor_thread = hub.spawn(self._monitor)      #new
 
     @set_ev_cls(
@@ -82,6 +104,29 @@ class MULTIPATH_13(app_manager.RyuApp):
         dpid = datapath.id
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
+        ### new
+        if datapath.id==1:
+            self.datapath_sw1=datapath
+            self.parser_sw1 = datapath.ofproto_parser
+            print("self.parser_sw1",self.parser_sw1)
+        elif datapath.id==2:
+            self.datapath_sw2=datapath
+            self.parser_sw2 = datapath.ofproto_parser
+            print("self.parser_sw2",self.parser_sw2)
+        elif datapath.id==3:
+            self.datapath_sw3=datapath
+            self.parser_sw3 = datapath.ofproto_parser
+            print("self.parser_sw3",self.parser_sw3)
+        elif datapath.id==4:
+            self.datapath_sw4=datapath
+            self.parser_sw4 = datapath.ofproto_parser
+            print("self.parser_sw4",self.parser_sw4)
+        elif datapath.id==5:
+            self.datapath_sw5=datapath
+            self.parser_sw5 = datapath.ofproto_parser  
+            print("self.parser_sw5",self.parser_sw5)
+        
+        ################################
 
         # install table-miss flow entry
         match = parser.OFPMatch()
@@ -307,23 +352,92 @@ class MULTIPATH_13(app_manager.RyuApp):
     @set_ev_cls(ofp_event.EventOFPPortStatsReply, MAIN_DISPATCHER)
     def _port_stats_reply_handler(self, ev):
         body = ev.msg.body
-        """
+        
         self.logger.info('datapath         port     '
                          'rx-pkts  rx-bytes rx-error '
                          'tx-pkts  tx-bytes tx-error')
         self.logger.info('---------------- -------- '
                          '-------- -------- -------- '
                          '-------- -------- --------')
-         """
-        no_of_ticks=no_of_ticks1
+         
+        self.no_of_ticks=self.no_of_ticks+1
         for stat in sorted(body, key=attrgetter('port_no')):
-            """
+            
             self.logger.info('%016x %8x %8d %8d %8d %8d %8d %8d',
                              ev.msg.datapath.id, stat.port_no,
                              stat.rx_packets, stat.rx_bytes, stat.rx_errors,
                              stat.tx_packets, stat.tx_bytes, stat.tx_errors)
-            """
+            
             if ev.msg.datapath.id==5 and stat.port_no==1:
-                self.logger.info("after no. of ticks is %8d Difference between rx and tx packets at s5 port 1 is %016d",no_of_ticks,stat.tx_packets-stat.rx_packets)
+                self.logger.info("after no. of ticks is %8d \nDifference between rx and tx packets at s5 port 1 is %016d",self.no_of_ticks,stat.tx_packets-stat.rx_packets)
+                if (stat.tx_packets-stat.rx_packets) >5:
+                    self.priority_incremntal+=1
+                    ##switch 1
+                    #self.add_flow(datapath, 0, 1, match, actions)
+                    actions = [self.parser_sw1.OFPActionOutput(3)]
+                    match = self.parser_sw1.OFPMatch(in_port=1, eth_dst="00:00:00:00:00:02",eth_src="00:00:00:00:00:01")
+                    self.add_flow(self.datapath_sw1, 0, self.priority_incremntal, match, actions)                    
+                    actions = [self.parser_sw1.OFPActionOutput(1)]
+                    match = self.parser_sw1.OFPMatch(in_port=3, eth_dst="00:00:00:00:00:01",eth_src="00:00:00:00:00:02")
+                    self.add_flow(self.datapath_sw1, 0, self.priority_incremntal, match, actions)                    
+                    #switch 3
+                    actions = [self.parser_sw3.OFPActionOutput(1)]
+                    match = self.parser_sw3.OFPMatch(in_port=2, eth_dst="00:00:00:00:00:02",eth_src="00:00:00:00:00:01")
+                    self.add_flow(self.datapath_sw3, 0, self.priority_incremntal, match, actions) 
+                    actions = [self.parser_sw3.OFPActionOutput(2)]
+                    match = self.parser_sw3.OFPMatch(in_port=1, eth_dst="00:00:00:00:00:01",eth_src="00:00:00:00:00:02")
+                    self.add_flow(self.datapath_sw3, 0, self.priority_incremntal, match, actions)       
+                    ##switch 4
+                    actions = [self.parser_sw4.OFPActionOutput(1)]
+                    match = self.parser_sw4.OFPMatch(in_port=2, eth_dst="00:00:00:00:00:02",eth_src="00:00:00:00:00:01")
+                    self.add_flow(self.datapath_sw4, 0, self.priority_incremntal, match, actions)                    
+                    actions = [self.parser_sw4.OFPActionOutput(2)]
+                    match = self.parser_sw4.OFPMatch(in_port=1, eth_dst="00:00:00:00:00:01",eth_src="00:00:00:00:00:02")
+                    self.add_flow(self.datapath_sw4, 0, self.priority_incremntal, match, actions)                    
+                    #switch 5
+                    actions = [self.parser_sw5.OFPActionOutput(2)]
+                    match = self.parser_sw5.OFPMatch(in_port=3, eth_dst="00:00:00:00:00:02",eth_src="00:00:00:00:00:01")
+                    self.add_flow(self.datapath_sw5, 0, self.priority_incremntal, match, actions) 
+                    actions = [self.parser_sw5.OFPActionOutput(3)]
+                    match = self.parser_sw5.OFPMatch(in_port=2, eth_dst="00:00:00:00:00:01",eth_src="00:00:00:00:00:02")
+                    self.add_flow(self.datapath_sw5, 0, self.priority_incremntal, match, actions)                     
+                    print("there is error on port 3 of s5")
+                    #self._execute_scenario_1(self)
             if ev.msg.datapath.id==5 and stat.port_no==3:
-                self.logger.info("after no. of ticks is %8d Difference between rx and tx packets at s5 port 3 is %016d",no_of_ticks,stat.tx_packets-stat.rx_packets)
+                self.logger.info("after no. of ticks is %8d \nDifference between rx and tx packets at s5 port 3 is %016d",self.no_of_ticks,stat.tx_packets-stat.rx_packets)
+                if (stat.tx_packets-stat.rx_packets) >5:
+                    self.priority_incremntal+=1
+                    #switch 
+                    ##switch 1
+                    actions = [self.parser_sw1.OFPActionOutput(2)]
+                    match = self.parser_sw1.OFPMatch(in_port=1, eth_dst="00:00:00:00:00:02",eth_src="00:00:00:00:00:01")
+                    self.add_flow(self.datapath_sw1, 0, self.priority_incremntal, match, actions)                    
+                    actions = [self.parser_sw1.OFPActionOutput(1)]
+                    match = self.parser_sw1.OFPMatch(in_port=2, eth_dst="00:00:00:00:00:01",eth_src="00:00:00:00:00:02")
+                    self.add_flow(self.datapath_sw1, 0, self.priority_incremntal, match, actions)                    
+                    #switch 2
+                    actions = [self.parser_sw2.OFPActionOutput(2)]
+                    match = self.parser_sw2.OFPMatch(in_port=1, eth_dst="00:00:00:00:00:02",eth_src="00:00:00:00:00:01")
+                    self.add_flow(self.datapath_sw2, 0, self.priority_incremntal, match, actions) 
+                    actions = [self.parser_sw2.OFPActionOutput(1)]
+                    match = self.parser_sw2.OFPMatch(in_port=2, eth_dst="00:00:00:00:00:01",eth_src="00:00:00:00:00:02")
+                    self.add_flow(self.datapath_sw2, 0, self.priority_incremntal, match, actions)                          
+                    #switch 5
+                    actions = [self.parser_sw5.OFPActionOutput(2)]
+                    match = self.parser_sw5.OFPMatch(in_port=1, eth_dst="00:00:00:00:00:02",eth_src="00:00:00:00:00:01")
+                    self.add_flow(self.datapath_sw5, 0, self.priority_incremntal, match, actions) 
+                    actions = [self.parser_sw5.OFPActionOutput(1)]
+                    match = self.parser_sw5.OFPMatch(in_port=2, eth_dst="00:00:00:00:00:01",eth_src="00:00:00:00:00:02")
+                    self.add_flow(self.datapath_sw5, 0, self.priority_incremntal, match, actions)                                         
+		#self._execute_scenario_2(self)
+                    print("there is error on port 1 of s5")
+
+                
+
+
+                
+            
+                
+            
+ 
+ 

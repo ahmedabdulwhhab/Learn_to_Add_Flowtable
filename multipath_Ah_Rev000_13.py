@@ -370,7 +370,7 @@ class MULTIPATH_13(app_manager.RyuApp):
             
             if ev.msg.datapath.id==5 and stat.port_no==1:
                 self.logger.info("after no. of ticks is %8d \nDifference between rx and tx packets at s5 port 1 is %016d",self.no_of_ticks,stat.tx_packets-stat.rx_packets)
-                if (stat.tx_packets-stat.rx_packets) >5:
+                if (stat.tx_packets-stat.rx_packets) >30:
                     self.priority_incremntal+=1
                     ##switch 1
                     #self.add_flow(datapath, 0, 1, match, actions)
@@ -405,7 +405,7 @@ class MULTIPATH_13(app_manager.RyuApp):
                     #self._execute_scenario_1(self)
             if ev.msg.datapath.id==5 and stat.port_no==3:
                 self.logger.info("after no. of ticks is %8d \nDifference between rx and tx packets at s5 port 3 is %016d",self.no_of_ticks,stat.tx_packets-stat.rx_packets)
-                if (stat.tx_packets-stat.rx_packets) >5:
+                if (stat.tx_packets-stat.rx_packets) >30:
                     self.priority_incremntal+=1
                     #switch 
                     ##switch 1
